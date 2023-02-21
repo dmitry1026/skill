@@ -1,0 +1,138 @@
+---
+
+- hosts: all
+  become: yes
+  tasks:
+
+  -  name: Install epel-release on RedHat Family
+     yum:
+        name=epel-release
+        state=latest
+     when:
+        ansible_os_family == "RedHat"
+
+  -  name: Import remi GPG key.
+     rpm_key:
+      key: "https://rpms.remirepo.net/RPM-GPG-KEY-remi2023"
+      state: present
+     when:
+        ansible_os_family == "RedHat"
+
+  -  name: Install remi repo.
+     yum:
+      name: "https://rpms.remirepo.net/enterprise/remi-release-7.rpm"
+      state: present
+     when:
+        ansible_os_family == "RedHat"
+
+  -  name: Install scl-utils on RedHat Family
+     yum:
+        name=scl-utils
+        state=latest
+     when:
+        ansible_os_family == "RedHat"
+
+  -  name: Installing php
+     yum:
+      name=php-mssql,php-pear,php74-php-mysql,php,php-pdo,php-pecl-redis,php-xml,php-pecl-zip,php-mysql,php-curl,php-gd,php-xmlrpc,php-soap,php-intl,php-zip,php-pecl-igbinary,httpd,httpd-tools,php-mbstring
+      state=latest
+     when:
+        ansible_os_family == "RedHat"
+
+  -  name: php7.4
+     yum:
+        name=php74
+        state=latest
+     when:
+        ansible_os_family == "RedHat"
+
+  -  name: php74-php-fpm
+     yum:
+        name=php74-php-fpm
+        state=latest
+     when:
+        ansible_os_family == "RedHat"
+
+  -  name: add a new string at the end of the file
+     lineinfile: dest=/etc/opt/remi/php74/php-fpm.d/www.conf
+      regexp='^'
+      insertafter=EOF
+      line='security.limit_extensions = .php .php3 .php4 .php5 .php7 .html'
+     when:
+        ansible_os_family == "RedHat"
+
+  -  name: Start service php74-php-fpm
+     become: yes
+     service:
+            name: php74-php-fpm
+            state: started
+            enabled: yes
+     when:
+        ansible_os_family == "RedHat"
+
+  -  name: Download and unpack latest WordPress
+     unarchive:
+        src: https://wordpress.org/latest.tar.gz
+        dest: "/var/www/wordpress.dmitry5078_ru_apache"
+        extra_opts: [--strip-components=1]
+        remote_src: yes
+     when:
+        ansible_os_family == "RedHat"
+
+
+  -  name: Set ownership
+     file:
+        path: "/var/www/wordpress.dmitry5078_ru_apache"
+        state: directory
+        recurse: yes
+        owner: apache
+        group: apache
+     when:
+        ansible_os_family == "RedHat"
+
+  -  name: Stop service apache
+     become: yes
+     service:
+            name: httpd
+            state: stopped
+     when:
+        ansible_os_family == "RedHat"
+
+  -  name: Delete content & directory
+     file:
+      state: absent
+      path: /etc/httpd/conf.d/
+     when:
+        ansible_os_family == "RedHat"
+
+  -  name: Re-create the directory
+     file:
+      state: directory
+      path: /etc/httpd/conf.d/
+     when:
+        ansible_os_family == "RedHat"
+
+  -  name: Create new Apache config file from template if CENTOS
+     become: yes
+     when:
+        ansible_os_family == "RedHat"
+     template:
+            src: "/etc/ansible/templates/wordpress.dmitry5078_ru_apache_centos_final.conf.j2"
+            dest: "/etc/httpd/conf.d/wordpress.dmitry5078_ru_apache.conf"
+
+  -  name: Create new Apache config file from template if CENTOS
+     become: yes
+     when:
+        ansible_os_family == "RedHat"
+     template:
+            src: "/etc/ansible/templates/dmitry5078_ru_apache_centos_final.conf.j2"
+            dest: "/etc/httpd/conf.d/dmitry5078_ru_apache.conf"
+
+  -  name: Start service apache
+     become: yes
+     service:
+            name: httpd
+            state: started
+            enabled: yes
+     when:
+        ansible_os_family == "RedHat"

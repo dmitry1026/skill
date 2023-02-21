@@ -1,0 +1,30 @@
+<VirtualHost *:8080>
+
+ServerName wordpress.dmitry5078.ru
+ServerAlias www.wordpress.dmitry5078.ru
+ServerAdmin dmitry1026@gmail.com
+SetHandler "proxy:fcgi://127.0.0.1:9000"
+ScriptAlias /cgi-bin/ "/var/www/cgi-bin/"
+AddHandler php74-fcgi .php
+Action php74-fcgi /cgi-bin/php74.fcgi
+DocumentRoot /var/www/wordpress.dmitry5078_ru_apache
+
+<IfModule remoteip_module>
+    RemoteIPHeader X-Forwarded-For
+</IfModule>
+
+ErrorLog /var/log/httpd/wordpress.dmitry5078_ru_apache_error.log
+CustomLog /var/log/httpd/wordpress.dmitry5078_ru_apache_access.log combined
+<Directory /var/www/wordpress.dmitry5078_ru_apache/>
+    Options FollowSymLinks
+    AllowOverride All
+    DirectoryIndex index.php
+    Order allow,deny
+    Allow from all
+</Directory>
+<Directory /var/www/wordpress.dmitry5078_ru_apache/wp-content>
+    Options FollowSymLinks
+    Order allow,deny
+    Allow from all
+</Directory>
+</VirtualHost>

@@ -1,0 +1,31 @@
+server {
+    server_name wordpress.dmitry5078.ru www.wordpress.dmitry5078.ru;
+    root /var/www/wordpress.dmitry5078.ru;
+    index index.html;
+
+    # HTTP configuration
+ listen 80;
+ listen [::]:80;
+
+    if ($host ~* ^www.(.*)$) {
+return 301 $scheme://$server_name$request_uri;
+}
+
+    # HTTP to HTTPS
+    if ($scheme != "https") {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+    # HTTPS configuration
+    listen [::]:443 ssl; # managed by Certbot
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/wordpress.dmitry5078.ru/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/wordpress.dmitry5078.ru/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+    location / {
+    }
+
+}
+

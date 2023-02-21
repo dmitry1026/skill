@@ -1,0 +1,201 @@
+---
+
+- hosts: all
+  become: yes
+  tasks:
+  -  name: Install Nginx on RedHat Family
+     yum:
+        name=nginx
+        state=latest
+     when:
+        ansible_os_family == "RedHat"
+     notify:
+        nginx systemd
+        
+  
+  -  name: Install Nginx on Ubuntu
+     apt:
+        name=nginx
+        state=latest
+     when:
+        ansible_os_family == "Debian"
+
+  -  name: Stop service nginx
+     become: yes 
+     service:
+            name: nginx
+            state: stopped
+
+  -  name: Create new nginx config file from template if CENTOS
+     become: yes
+     when:
+        ansible_os_family == "RedHat"
+     template:
+            src: "/etc/ansible/templates/nginx_centos.conf.j2"
+            dest: "/etc/nginx/conf.d/dmitry5078.ru.conf"
+
+  -  name: Create new nginx config file from template if UBUNTU
+     become: yes
+     when:
+        ansible_os_family == "Debian"
+     template:
+            src: "/etc/ansible/templates/nginx_ubuntu.conf.j2"
+            dest: "/etc/nginx/conf.d/dmitry5090.ru.conf"
+
+  -  name: Creates directory
+     become: yes
+     when:
+        ansible_os_family == "RedHat"
+     file:
+        path: /var/www/dmitry5078.ru
+        state: directory
+
+  -  name: Creates directory /var/www/wordpress.dmitry5078.ru
+     become: yes
+     when:
+        ansible_os_family == "RedHat"
+     file:
+        path: /var/www/wordpress.dmitry5078.ru
+        state: directory
+
+  -  name: Creates directory
+     become: yes
+     when:
+        ansible_os_family == "Debian"
+     file:
+        path: /var/www/dmitry5090.ru
+        state: directory
+
+  -  name: Create index.html for Nginx if CENTOS
+     become: yes
+     when:
+        ansible_os_family == "RedHat"
+     template:
+            src: "/etc/ansible/templates/index_centos.html"
+            dest: "/var/www/dmitry5078.ru/index.html"
+
+  -  name: Create index.html for wordpress.dmitry50778.ru Nginx if CENTOS
+     become: yes
+     when:
+        ansible_os_family == "RedHat"
+     template:
+            src: "/etc/ansible/templates/index_centos_nginx_443_wordpress.html"
+            dest: "/var/www/wordpress.dmitry5078.ru/index.html"
+
+  -  name: Create index.html for Nginx if UBUNTU
+     become: yes
+     when:
+        ansible_os_family == "Debian"
+     template:
+            src: "/etc/ansible/templates/index_ubuntu.html"
+            dest: "/var/www/dmitry5090.ru/index.html"
+
+
+  -  name: Start service Nginx
+     become: yes
+     service:
+            name: nginx
+            state: started
+            enabled: yes
+
+  -  name: Install epel-release on RedHat Family
+     yum:
+        name=epel-release
+        state=latest
+     when:
+        ansible_os_family == "RedHat"
+
+  -   name: Ensure snapd is installed.
+      package:
+       name: snapd
+       state: present
+      register: snapd_install
+
+  -  name: Ensure snapd is enabled.
+     systemd:
+      name: snapd.socket
+      enabled: true
+      state: started
+
+  -  name: Enable classic snap support.
+     file:
+      src: /var/lib/snapd/snap
+      dest: /snap
+      state: link
+     when: ansible_os_family != "Debian"
+
+  -  name: Update snap after install.
+     shell: snap install core; snap refresh core
+     changed_when: true
+     failed_when: false
+     when: snapd_install is changed
+
+  -  name: Install certbot via snap.
+     snap:
+      name: certbot
+      classic: true
+
+  -  name: Symlink certbot into place.
+     file:
+       src: /snap/bin/certbot
+       dest: /usr/bin/certbot
+       state: link
+     ignore_errors: "{{ ansible_check_mode }}"
+
+  -  name: Set Certbot script variable.
+     set_fact:
+       certbot_script: /usr/bin/certbot
+
+  -  name: Ensure initial certificates are created
+     raw: certbot certonly --nginx -w /var/www/wordpress.dmitry5078.ru  -d wordpress.dmitry5078.ru --email dmitry1026@gmail.com --agree-tos --non-interactive
+     become: yes
+     when: ansible_os_family != "Debian"
+
+  -  name: Ensure initial certificates are created
+     raw: certbot certonly --nginx -w /var/www/dmitry5078.ru  -d dmitry5078.ru --email dmitry1026@gmail.com --agree-tos --non-interactive
+     become: yes
+     when: ansible_os_family != "Debian"
+
+
+  -  name: Ensure initial certificates are created
+     raw: certbot certonly --nginx -w /var/www/dmitry5090.ru  -d dmitry5090.ru --email dmitry1026@gmail.com --agree-tos --non-interactive
+     become: yes
+     when: ansible_os_family == "Debian"
+
+
+  -  name: Stop service nginx
+     become: yes
+     service:
+            name: nginx
+            state: stopped
+
+  -  name: Create new nginx config file dmitry5078.ru from template if CENTOS
+     become: yes
+     when:
+        ansible_os_family == "RedHat"
+     template:
+            src: "/etc/ansible/templates/nginx_centos_443.conf.j2"
+            dest: "/etc/nginx/conf.d/dmitry5078.ru.conf"
+
+  -  name: Create new nginx config file wordpress.dmitry5078.ru from template if CENTOS
+     become: yes
+     when:
+        ansible_os_family == "RedHat"
+     template:
+            src: "/etc/ansible/templates/nginx_centos_wordpress_443.conf.j2"
+            dest: "/etc/nginx/conf.d/wordpress.dmitry5078.ru.conf"
+
+  -  name: Create new nginx config file from template if UBUNTU
+     become: yes
+     when:
+        ansible_os_family == "Debian"
+     template:
+            src: "/etc/ansible/templates/nginx_ubuntu_443.conf.j2"
+            dest: "/etc/nginx/conf.d/dmitry5090.ru.conf"
+
+  -  name: Start service Nginx
+     become: yes
+     service:
+            name: nginx
+            state: started
+            enabled: yes

@@ -1,0 +1,44 @@
+---
+
+- hosts: final2.my
+  become: yes
+  tasks:
+  -  name: Download MySQL Community Repo
+     get_url: url=http://repo.mysql.com/mysql-community-release-el7-7.noarch.rpm dest=/tmp/mysql-community-release-el7-7.noarch.rpm
+     when:
+        ansible_os_family == "RedHat"
+
+  -  name: Check if foo.rpm is installed
+     command: rpm -q mysql-community-release-el7-7.noarch
+     register: rpm_check
+     when:
+        ansible_os_family == "RedHat"
+
+  -  name: Install MySQL Community Repo
+     command: /usr/bin/rpm -ivh /tmp/mysql-community-release-el7-7.noarch.rpm
+     when:
+        rpm_check.stdout.find('is not installed') != -1 and ansible_os_family == "RedHat"
+
+  -  name: Install MySQL Server
+     yum: 
+       name=mysql-server
+       state=present
+     when:
+        ansible_os_family == "RedHat"
+
+  -  name: Install MySQL-python, this is required for the task remove anonymous user
+     yum: 
+       name=MySQL-python
+       state=present
+     when:
+        ansible_os_family == "RedHat"
+
+  -  name: Start service mysqld
+     become: yes
+     service:
+            name: mysqld
+            state: started
+            enabled: yes
+     when:
+        ansible_os_family == "RedHat"
+

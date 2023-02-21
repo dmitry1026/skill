@@ -1,0 +1,14 @@
+<VirtualHost *:8080>
+
+ServerName dmitry5090.ru
+ServerAlias www.dmitry5090.ru
+ServerAdmin dmitry1026@gmail.com
+DocumentRoot /var/www/dmitry5090_ru_apache
+
+<IfModule remoteip_module>
+    RemoteIPHeader X-Forwarded-For
+</IfModule>
+
+ErrorLog /var/log/apache2/dmitry5090_ru_apache_error.log
+CustomLog /var/log/apache2/dmitry5090_ru_apache_access.log combined
+</VirtualHost>

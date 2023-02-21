@@ -1,0 +1,163 @@
+---
+
+- hosts: all
+  become: yes
+  tasks:
+  -  name: Install Apache on RedHat Family
+     yum:
+        name=httpd
+        state=latest
+     when:
+        ansible_os_family == "RedHat"
+     notify:
+        httpd systemd
+
+
+  -  name: Install Apache on Ubuntu
+     apt:
+        name=apache2
+        state=latest
+     when:
+        ansible_os_family == "Debian"
+
+  -  name: Apache listen on port 8080 if CENTOS
+     lineinfile: dest=/etc/httpd/conf/httpd.conf regexp="^Listen 80" line="Listen 8080" state=present
+     when:
+        ansible_os_family == "RedHat"
+
+  -  name: Apache listen on port 8080 if UBUNTU
+     lineinfile: dest=/etc/apache2/ports.conf regexp="^Listen 80" line="Listen 8080" state=present
+     when:
+        ansible_os_family == "Debian"
+
+  -  name: Delete content & directory
+     file:
+      state: absent
+      path: /etc/httpd/conf.d/
+
+  -  name: Re-create the directory
+     file:
+      state: directory
+      path: /etc/httpd/conf.d/
+
+  -  name: Create new Apache config file from template if CENTOS
+     become: yes
+     when:
+        ansible_os_family == "RedHat"
+     template:
+            src: "/etc/ansible/templates/dmitry5078_ru_apache_centos.conf.j2"
+            dest: "/etc/httpd/conf.d/dmitry5078_ru_apache.conf"
+
+  -  name: Create new Apache config file from template if Ubuntu
+     become: yes
+     when:
+        ansible_os_family == "Debian"
+     template:
+            src: "/etc/ansible/templates/dmitry5090_ru_apache_ubuntu.conf.j2"
+            dest: "/etc/apache2/sites-available/dmitry5090_ru_apache.conf"
+
+
+  -  name: Enable new site Apache Ubuntu
+     shell: /usr/sbin/a2ensite dmitry5090_ru_apache.conf
+     when:
+        ansible_os_family == "Debian"
+
+  -  name: Disable default Apache site
+     shell: /usr/sbin/a2dissite 000-default.conf
+     when:
+        ansible_os_family == "Debian"
+    
+  -  name: Create new Apache config file from template if CENTOS
+     become: yes
+     when:
+        ansible_os_family == "RedHat"
+     template:
+            src: "/etc/ansible/templates/wordpress.dmitry5078_ru_apache_centos.conf.j2"
+            dest: "/etc/httpd/conf.d/wordpress.dmitry5078_ru_apache.conf"
+
+  -  name: Creates directory SITE dmitry5078.ru from Apache
+     become: yes
+     when:
+        ansible_os_family == "RedHat"
+     file:
+        path: /var/www/dmitry5078_ru_apache
+        state: directory
+
+  -  name: Creates directory SITE dmitry5090.ru from Apache
+     become: yes
+     when:
+        ansible_os_family == "Debian"
+     file:
+        path: /var/www/dmitry5090_ru_apache
+        state: directory
+
+  -  name: Creates directory SITE wordpress.dmitry5078.ru from Apache
+     become: yes
+     when:
+        ansible_os_family == "RedHat"
+     file:
+        path: /var/www/wordpress.dmitry5078_ru_apache
+        state: directory
+
+  -  name: Create new index file from template if CENTOS
+     become: yes
+     when:
+        ansible_os_family == "RedHat"
+     template:
+            src: "/etc/ansible/templates/index_dmitry5078.ru_apache.html"
+            dest: "/var/www/dmitry5078_ru_apache/index.html"
+
+  -  name: Create new index file from template if Ubuntu
+     become: yes
+     when:
+        ansible_os_family == "Debian"
+     template:
+            src: "/etc/ansible/templates/index_dmitry5090.ru_apache.html"
+            dest: "/var/www/dmitry5090_ru_apache/index.html"
+
+  -  name: Create new index file wordpress.dmitry5078.ru from template if CENTOS
+     become: yes
+     when:
+        ansible_os_family == "RedHat"
+     template:
+            src: "/etc/ansible/templates/index_wordpress.dmitry5078.ru_apache.html"
+            dest: "/var/www/wordpress.dmitry5078_ru_apache/index.html"
+
+  -  name: Stop service nginx
+     become: yes
+     service:
+            name: nginx
+            state: stopped
+
+  -  name: Create new nginx config file dmitry5078.ru from template if CENTOS
+     become: yes
+     when:
+        ansible_os_family == "RedHat"
+     template:
+            src: "/etc/ansible/templates/nginx_centos_to_apache.conf.j2"
+            dest: "/etc/nginx/conf.d/dmitry5078.ru.conf"
+
+  -  name: Create new nginx config file wordpress.dmitry5078.ru from template if CENTOS
+     become: yes
+     when:
+        ansible_os_family == "RedHat"
+     template:
+            src: "/etc/ansible/templates/nginx_centos_wordpress_to_apache.conf.j2"
+            dest: "/etc/nginx/conf.d/wordpress.dmitry5078.ru.conf"
+
+  -  name: Create new nginx config file dmitry5090.ru from template if UBUNTU
+     become: yes
+     when:
+        ansible_os_family == "Debian"
+     template:
+            src: "/etc/ansible/templates/nginx_ubuntu_to_apache.conf.j2"
+            dest: "/etc/nginx/conf.d/dmitry5090.ru.conf"
+
+  -  name: Start service Nginx
+     become: yes
+     service:
+            name: nginx
+            state: started
+            enabled: yes
+
+

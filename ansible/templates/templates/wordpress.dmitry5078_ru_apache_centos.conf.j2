@@ -1,0 +1,14 @@
+<VirtualHost *:8080>
+
+ServerName wordpress.dmitry5078.ru
+ServerAlias www.wordpress.dmitry5078.ru
+ServerAdmin dmitry1026@gmail.com
+DocumentRoot /var/www/wordpress.dmitry5078_ru_apache
+
+<IfModule remoteip_module>
+    RemoteIPHeader X-Forwarded-For
+</IfModule>
+
+ErrorLog /var/log/httpd/wordpress.dmitry5078_ru_apache_error.log
+CustomLog /var/log/httpd/wordpress.dmitry5078_ru_apache_access.log combined
+</VirtualHost>
